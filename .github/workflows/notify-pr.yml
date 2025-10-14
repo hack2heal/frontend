@@ -1,0 +1,26 @@
+name: Notify Telegram on PR
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram message
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TOPIC_NUMBER_PR: ${{ secrets.TELEGRAM_TOPIC_NUMBER_PR }}
+        run: |
+          MESSAGE=$(printf "🆕 *New PR* by %s in \`%s\`\n• *Title:* %s\n• [View Pull Request](%s)" \
+            "${{ github.actor }}" \
+            "${{ github.repository }}" \
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.html_url }}")
+          curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+            -d "chat_id=$CHAT_ID" \
+            -d "message_thread_id=$TOPIC_NUMBER_PR" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=Markdown"
